@@ -5,8 +5,8 @@ date: 2022.8.17
 output: pdf_document
 ---
 [![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
-# 落苗生根(Fabric)  
-能够自动种植树苗掉落物的Fabric模组；  
+# 落苗生根
+能够自动种植树苗掉落物的模组；  
 其他模组加入的树苗理论上也能够种植；  
 其他植物方块也可以被自动种植，但需要手动开启此功能。  
 请注意模组适用的游戏版本，需要安装Fabric Loader与Fabric API。
@@ -36,7 +36,6 @@ output: pdf_document
  - allowFlower：启用花的自动种植，默认：false，期望：boolean
  - allowOther：启用其他植物的自动种植，默认：false，期望：boolean
  - showTitleOnPlayerConnected: 在**管理员**加入服务器时，显示当前服务器是否启用Saplanting，默认：false，期望：boolean  
- - ignoreShape: 不论树苗是否能在1x1的形状下生长，依然种植，默认：false，期望：boolean
  - plantDelay：自动种植的延迟（单位tick），默认：40，期望：nonnegative integers
  - avoidDense：其他树的检测半径（如果有其他树则不种植），默认：2，expect nonnegative integers
  - playerAround：玩家的检测半径（如果有玩家则不种植），默认：2，expect nonnegative integers

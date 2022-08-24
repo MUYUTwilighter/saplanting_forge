@@ -4,8 +4,8 @@ author: MUYU_Twilighter
 date: 2022.8.17
 ---
 [![](http://cf.way2muchnoise.eu/full_saplanting_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/saplanting) [![Discord](https://img.shields.io/discord/966726130105217094)](https://discord.gg/JunKeKCJAY)  
-# Saplanting(Fabric)
-A fabric mod that automatically plants sapling drops in minecraft games.  
+# Saplanting
+A mod that automatically plants sapling drops in minecraft games.  
 Saplings from other mods are supported theoretically.  
 Other plants are also available, if you configure them.  
 Make sure that your Minecraft version is supported by the mod.  
@@ -38,8 +38,7 @@ Only for sapling blocks that can be planted in shape of 2x2.
  - allowFungus: Enable auto-planting for fungus, default: false, expect: boolean
  - allowFlower: Enable auto-planting for flowers, default: false, expect: boolean
  - allowOther: Enable auto-planting for other plants, default: false, expect: boolean
- - showTitleOnPlayerConnected: Show enability for Saplanting on a server when an **operator** connected to this server, default: false, expect: boolean  
- - ignoreShape: Plant no matter the sapling can grow in shape of 1x1, default: false, expect: boolean
+ - showTitleOnPlayerConnected: Show enability for Saplanting on a server when an **operator** connected to this server, default: false, expect: boolean
  - plantDelay: How many ticks before the sapling drop will be planted, default: 40, expect: nonnegative integers
  - avoidDense: The radius of area that will not plant when selected area already got other trees, default: 2, expect nonnegative integers
  - playerAround: Not to plant if player around, default: 2, expect nonnegative integers
