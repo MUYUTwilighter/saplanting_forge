@@ -82,14 +82,16 @@ public class ItemEntityEvent {
 
                 while (!TASKS.isEmpty()) {
                     ItemEntity entity = TASKS.removeFirst();
-                    if (!tickPlantCheck(entity)) { // tick-check
-                        entity.tickCount = 0;
+                    /* Tick Check */
+                    if (!tickPlantCheck(entity)) {
+                        entity.tickCount = -1;
                         continue;
                     }
 
-                    if (entity.tickCount > Config.getPlantDelay() && roundPlantCheck(entity)) { // round-check
+                    /* Round Check */
+                    if (entity.tickCount > Config.getPlantDelay() && roundPlantCheck(entity)) {
                         plant(entity);
-                        entity.tickCount = 0;
+                        entity.tickCount = -1;
                     }
                 }
             }
