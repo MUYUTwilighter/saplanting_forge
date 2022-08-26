@@ -25,6 +25,7 @@
   "saplanting.commands.saplanting.blackList.remove.notInBlackList": "This item does not exist in black list",
   "saplanting.commands.saplanting.blackList.display": "Content of black list: ",
   "saplanting.commands.saplanting.blackList.display.empty": "Black list is empty.",
+  "saplanting.commands.saplanting.blackList.clear": "Blacklist was successfully cleared.",
 
   "saplanting.commands.saplanting.save.success": "Successfully saved to file.",
   "saplanting.commands.saplanting.save.path": "Open file",

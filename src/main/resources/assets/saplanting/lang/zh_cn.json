@@ -25,6 +25,7 @@
   "saplanting.commands.saplanting.blackList.remove.notInBlackList": "该物品不在黑名单中",
   "saplanting.commands.saplanting.blackList.display": "当前黑名单:",
   "saplanting.commands.saplanting.blackList.display.empty": "当前黑名单为空",
+  "saplanting.commands.saplanting.blackList.clear": "成功清空黑名单",
 
   "saplanting.commands.saplanting.save.success": "成功保存至文件",
   "saplanting.commands.saplanting.save.path": "打开文件",

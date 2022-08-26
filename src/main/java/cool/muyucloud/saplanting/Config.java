@@ -3,11 +3,11 @@ package cool.muyucloud.saplanting;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.block.*;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.*;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.commons.io.IOUtils;
 
@@ -50,7 +50,7 @@ public class Config {
         BushBlock block = ((BushBlock) item.getBlock());
         if (block instanceof SaplingBlock) {
             return CONFIG.allowSapling;
-        } else if (block instanceof CropsBlock) {
+        } else if (block instanceof CropBlock) {
             return CONFIG.allowCrop;
         } else if (block instanceof MushroomBlock) {
             return CONFIG.allowMushroom;

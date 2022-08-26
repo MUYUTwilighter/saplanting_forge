@@ -2,16 +2,16 @@ package cool.muyucloud.saplanting;
 
 import cool.muyucloud.saplanting.command.SaplantingCommand;
 import cool.muyucloud.saplanting.events.ItemEntityEvent;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.server.management.PlayerList;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
-import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,14 +37,14 @@ public class Saplanting
     }
 
     private static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        ServerPlayerEntity player = ((ServerPlayerEntity) event.getPlayer());
+        ServerPlayer player = ((ServerPlayer) event.getPlayer());
         PlayerList playerList = Objects.requireNonNull(player.getServer()).getPlayerList();
         if (Config.getShowTitleOnPlayerConnected() && playerList.isOp(player.getGameProfile()) && !Config.getPlantEnable()) {
-            player.displayClientMessage(new TranslationTextComponent("saplanting.info.chat.onPlayerConnected.disabled"), false);
+            player.displayClientMessage(new TranslatableComponent("saplanting.info.chat.onPlayerConnected.disabled"), false);
         }
     }
 
-    private static void onServerStarted(FMLServerStartedEvent event) {
+    private static void onServerStarted(ServerStartedEvent event) {
         if (Config.getPlantEnable()) {
             LOGGER.info("Saplanting is enabled now \\^o^/");
         } else {
@@ -53,7 +53,7 @@ public class Saplanting
         }
     }
 
-    private static void onServerStopped(FMLServerStoppedEvent event) {
+    private static void onServerStopped(ServerStoppedEvent event) {
         LOGGER.info("Stopping item entity thread.");
         ItemEntityEvent.stop();
         LOGGER.info("Dumping current properties into file.");

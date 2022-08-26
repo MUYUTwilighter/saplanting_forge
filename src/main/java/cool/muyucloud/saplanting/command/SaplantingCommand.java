@@ -5,24 +5,18 @@ import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import cool.muyucloud.saplanting.Config;
-import jdk.nashorn.internal.ir.Block;
-import net.minecraft.block.BushBlock;
-import net.minecraft.command.CommandSource;
-import net.minecraft.command.Commands;
-import net.minecraft.command.arguments.ItemArgument;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.util.text.Color;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.util.text.event.ClickEvent;
-import net.minecraft.util.text.event.HoverEvent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.network.chat.*;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import org.w3c.dom.Text;
 
 public class SaplantingCommand {
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         // /saplanting
-        final LiteralArgumentBuilder<CommandSource> root = (Commands.literal("saplanting")
+        final LiteralArgumentBuilder<CommandSourceStack> root = (Commands.literal("saplanting")
                 .requires(source -> source.hasPermission(2)));
 
         // /saplanting <Integer>/NULL
@@ -113,7 +107,7 @@ public class SaplantingCommand {
                         .executes(context -> clearBlackList(context.getSource()))));
 
         // /saplanting load <Property>
-        LiteralArgumentBuilder<CommandSource> load = Commands.literal("load").executes(context -> loadProperty(context.getSource()));
+        LiteralArgumentBuilder<CommandSourceStack> load = Commands.literal("load").executes(context -> loadProperty(context.getSource()));
         load.then(Commands.literal("plantEnable")
                 .executes(context -> loadProperty(context.getSource(), "plantEnable")));
         load.then(Commands.literal("plantLarge")
@@ -153,56 +147,56 @@ public class SaplantingCommand {
         dispatcher.register(root);
     }
 
-    public static int showBlackList(CommandSource source) {
+    public static int showBlackList(CommandSourceStack source) {
         if (Config.blackListSize() == 0) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.display.empty"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.display.empty"), false);
         } else {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.display"), false);
-            source.sendSuccess(new StringTextComponent(Config.strBlackList()), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.display"), false);
+            source.sendSuccess(new TextComponent(Config.strBlackList()), false);
         }
         return Config.blackListSize();
     }
 
-    public static int addBlackList(CommandSource source, Item item) {
+    public static int addBlackList(CommandSourceStack source, Item item) {
         if (!(item instanceof BlockItem) || !Config.isItemAllowed(((BlockItem) item))) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.add.notPlantable")
-                    .setStyle(Style.EMPTY.withColor(Color.parseColor("red"))), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.add.notPlantable")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parseColor("red"))), false);
             return 0;
         }
         
         if (Config.inBlackList(((BlockItem) item))) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.add.inBlackList")
-                    .setStyle(Style.EMPTY.withColor(Color.parseColor("red"))), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.add.inBlackList")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parseColor("red"))), false);
             return 0;
         } else {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.add.success"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.add.success"), false);
             Config.addToBlackList(((BlockItem) item));
             return 1;
         }
     }
 
-    public static int removeBlackList(CommandSource source, Item item) {
+    public static int removeBlackList(CommandSourceStack source, Item item) {
         if (item instanceof BlockItem && Config.inBlackList(((BlockItem) item))) {
             Config.rmFromBlackList(((BlockItem) item));
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.remove.success"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.remove.success"), false);
             return 1;
         } else {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.remove.notInBlackList")
-                    .setStyle(Style.EMPTY.withColor(Color.parseColor("red"))), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.remove.notInBlackList")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parseColor("red"))), false);
             return 0;
         }
     }
 
-    public static int clearBlackList(CommandSource source) {
+    public static int clearBlackList(CommandSourceStack source) {
         int output = Config.blackListSize();
         Config.clearBlackList();
-        source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.clear"), false);
+        source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.clear"), false);
         return output;
     }
 
-    public static int showAll(CommandSource target, int page) {
-        target.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.showAll")
-                        .setStyle(Style.EMPTY.withColor(Color.parseColor("gold"))), false);
+    public static int showAll(CommandSourceStack target, int page) {
+        target.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.showAll")
+                        .setStyle(Style.EMPTY.withColor(TextColor.parseColor("gold"))), false);
 
         if (page < 0 || page > 3) {
             page = 1;
@@ -210,30 +204,30 @@ public class SaplantingCommand {
 
         switch (page) {
             case 1:
-                target.sendSuccess(new StringTextComponent(" - plantEnable:   " + Config.getPlantEnable()), false);
-                target.sendSuccess(new StringTextComponent(" - plantLarge:    " + Config.getPlantLarge()), false);
-                target.sendSuccess(new StringTextComponent(" - blackList:     " + Config.getBlackListEnable()), false);
-                target.sendSuccess(new StringTextComponent(" - allowSapling:  " + Config.getAllowSapling()), false);
-                target.sendSuccess(new StringTextComponent(" - allowCrop:     " + Config.getAllowCrop()), false);
-                target.sendSuccess(new StringTextComponent(" - allowMushroom: " + Config.getAllowMushroom()), false);
-                target.sendSuccess(new StringTextComponent(" - allowFungus:   " + Config.getAllowFungus()), false);
-                target.sendSuccess(new StringTextComponent(" - allowFlower:   " + Config.getAllowFlower()), false);
-                target.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.showAll.nextPage").setStyle(Style.EMPTY
-                        .withColor(Color.parseColor("green"))
+                target.sendSuccess(new TextComponent(" - plantEnable:   " + Config.getPlantEnable()), false);
+                target.sendSuccess(new TextComponent(" - plantLarge:    " + Config.getPlantLarge()), false);
+                target.sendSuccess(new TextComponent(" - blackList:     " + Config.getBlackListEnable()), false);
+                target.sendSuccess(new TextComponent(" - allowSapling:  " + Config.getAllowSapling()), false);
+                target.sendSuccess(new TextComponent(" - allowCrop:     " + Config.getAllowCrop()), false);
+                target.sendSuccess(new TextComponent(" - allowMushroom: " + Config.getAllowMushroom()), false);
+                target.sendSuccess(new TextComponent(" - allowFungus:   " + Config.getAllowFungus()), false);
+                target.sendSuccess(new TextComponent(" - allowFlower:   " + Config.getAllowFlower()), false);
+                target.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.showAll.nextPage").setStyle(Style.EMPTY
+                        .withColor(TextColor.parseColor("green"))
                         .withUnderlined(true)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page + 1)))), false);
                 break;
             case 2:
-                target.sendSuccess(new StringTextComponent(" - allowOther:    " + Config.getAllowOther()), false);
-                target.sendSuccess(new StringTextComponent(" - showTitle... : " + Config.getAllowOther()).setStyle(Style.EMPTY
-                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new StringTextComponent("showTitleOnPlayerConnected")))),
+                target.sendSuccess(new TextComponent(" - allowOther:    " + Config.getAllowOther()), false);
+                target.sendSuccess(new TextComponent(" - showTitle... : " + Config.getAllowOther()).setStyle(Style.EMPTY
+                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent("showTitleOnPlayerConnected")))),
                         false);
-//                target.sendSuccess(new StringTextComponent(" - ignoreShape:   " + Config.getIgnoreShape()), false);
-                target.sendSuccess(new StringTextComponent(" - plantDelay:    " + Config.getPlantDelay()), false);
-                target.sendSuccess(new StringTextComponent(" - avoidDense:    " + Config.getAvoidDense()), false);
-                target.sendSuccess(new StringTextComponent(" - playerAround:  " + Config.getPlayerAround()), false);
-                target.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.showAll.formerPage").setStyle(Style.EMPTY
-                        .withColor(Color.parseColor("green"))
+//                target.sendSuccess(new TextComponent(" - ignoreShape:   " + Config.getIgnoreShape()), false);
+                target.sendSuccess(new TextComponent(" - plantDelay:    " + Config.getPlantDelay()), false);
+                target.sendSuccess(new TextComponent(" - avoidDense:    " + Config.getAvoidDense()), false);
+                target.sendSuccess(new TextComponent(" - playerAround:  " + Config.getPlayerAround()), false);
+                target.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.showAll.formerPage").setStyle(Style.EMPTY
+                        .withColor(TextColor.parseColor("green"))
                         .withUnderlined(true)
                         .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/saplanting " + (page - 1)))), false);
                 break;
@@ -242,271 +236,271 @@ public class SaplantingCommand {
         return 1;
     }
 
-    public static int setPlantEnable(CommandSource source, boolean value) {
+    public static int setPlantEnable(CommandSourceStack source, boolean value) {
         Config.setPlantEnable(value);
-        source.sendSuccess(new StringTextComponent("plantEnable")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
-                .append(new StringTextComponent(Boolean.toString(value))), false);
+        source.sendSuccess(new TextComponent("plantEnable")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
+                .append(new TextComponent(Boolean.toString(value))), false);
         return value ? 1 : 0;
     }
 
-    public static int setPlantLarge(CommandSource source, boolean value) {
+    public static int setPlantLarge(CommandSourceStack source, boolean value) {
         Config.setPlantLarge(value);
-        source.sendSuccess(new StringTextComponent("plantLarge")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("plantLarge")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setBlackListEnable(CommandSource source, boolean value) {
+    public static int setBlackListEnable(CommandSourceStack source, boolean value) {
         Config.setBlackListEnable(value);
         if (value) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.enable"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.enable"), false);
             return 1;
         } else {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.disable"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.disable"), false);
             return 0;
         }
     }
 
-    public static int setAllowSapling(CommandSource source, boolean value) {
+    public static int setAllowSapling(CommandSourceStack source, boolean value) {
         Config.setAllowSapling(value);
-        source.sendSuccess(new StringTextComponent("allowSapling")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("allowSapling")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setAllowCrop(CommandSource source, boolean value) {
+    public static int setAllowCrop(CommandSourceStack source, boolean value) {
         Config.setAllowCrop(value);
-        source.sendSuccess(new StringTextComponent("allowCrop")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("allowCrop")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setAllowMushroom(CommandSource source, boolean value) {
+    public static int setAllowMushroom(CommandSourceStack source, boolean value) {
         Config.setAllowMushroom(value);
-        source.sendSuccess(new StringTextComponent("allowMushroom")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("allowMushroom")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setAllowFungus(CommandSource source, boolean value) {
+    public static int setAllowFungus(CommandSourceStack source, boolean value) {
         Config.setAllowFungus(value);
-        source.sendSuccess(new StringTextComponent("allowFungus")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("allowFungus")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setAllowFlower(CommandSource source, boolean value) {
+    public static int setAllowFlower(CommandSourceStack source, boolean value) {
         Config.setAllowFlower(value);
-        source.sendSuccess(new StringTextComponent("allowFlower")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("allowFlower")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setAllowOther(CommandSource source, boolean value) {
+    public static int setAllowOther(CommandSourceStack source, boolean value) {
         Config.setAllowOther(value);
-        source.sendSuccess(new StringTextComponent("allowOther")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("allowOther")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setShowTitleOnPlayerConnected(CommandSource source, boolean value) {
+    public static int setShowTitleOnPlayerConnected(CommandSourceStack source, boolean value) {
         Config.setShowTitleOnPlayerConnected(value);
-        source.sendSuccess(new StringTextComponent("showTitleOnPlayerConnected")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("showTitleOnPlayerConnected")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setIgnoreShape(CommandSource source, boolean value) {
+    public static int setIgnoreShape(CommandSourceStack source, boolean value) {
         Config.setIgnoreShape(value);
-        source.sendSuccess(new StringTextComponent("ignoreShape")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("ignoreShape")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Boolean.toString(value)), false);
         return value ? 1 : 0;
     }
 
-    public static int setPlantDelay(CommandSource source, int value) {
+    public static int setPlantDelay(CommandSourceStack source, int value) {
         Config.setPlantDelay(value);
-        source.sendSuccess(new StringTextComponent("plantDelay")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("plantDelay")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Integer.toString(value)), false);
         return value;
     }
 
-    public static int setAvoidDense(CommandSource source, int value) {
+    public static int setAvoidDense(CommandSourceStack source, int value) {
         Config.setAvoidDense(value);
-        source.sendSuccess(new StringTextComponent("avoidDense")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("avoidDense")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Integer.toString(value)), false);
         return value;
     }
 
-    public static int setPlayerAround(CommandSource source, int value) {
+    public static int setPlayerAround(CommandSourceStack source, int value) {
         Config.setPlayerAround(value);
-        source.sendSuccess(new StringTextComponent("playerAround")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.set"))
+        source.sendSuccess(new TextComponent("playerAround")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.set"))
                 .append(Integer.toString(value)), false);
         return value;
     }
 
-    public static int getPlantEnable(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("plantEnable")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getPlantEnable(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("plantEnable")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getPlantEnable())), false);
         return Config.getPlantEnable() ? 1 : 0;
     }
 
-    public static int getPlantLarge(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("plantLarge")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getPlantLarge(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("plantLarge")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getPlantLarge())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getBlackListEnable(CommandSource source) {
+    public static int getBlackListEnable(CommandSourceStack source) {
         if (Config.getBlackListEnable()) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.enable"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.enable"), false);
         } else {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.blackList.disable"), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.blackList.disable"), false);
         }
         return Config.getBlackListEnable() ? 1 : 0;
     }
 
-    public static int getAllowSapling(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("allowSapling")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAllowSapling(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("allowSapling")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowSapling())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getAllowCrop(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("allowCrop")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAllowCrop(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("allowCrop")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowCrop())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getAllowMushroom(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("allowMushroom")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAllowMushroom(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("allowMushroom")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowMushroom())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getAllowFungus(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("allowFungus")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAllowFungus(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("allowFungus")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowFungus())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getAllowFlower(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("allowFlower")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAllowFlower(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("allowFlower")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowFlower())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getAllowOther(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("allowOther")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAllowOther(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("allowOther")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getAllowOther())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getShowTitleOnPlayerConnected(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("showTitleOnPlayerConnected")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getShowTitleOnPlayerConnected(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("showTitleOnPlayerConnected")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getShowTitleOnPlayerConnected())), false);
         return Config.getPlantLarge() ? 1 : 0;
     }
 
-    public static int getIgnoreShape(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("ignoreShape")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getIgnoreShape(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("ignoreShape")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Boolean.toString(Config.getIgnoreShape())), false);
         return Config.getIgnoreShape() ? 1 : 0;
     }
 
-    public static int getPlantDelay(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("plantDelay")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getPlantDelay(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("plantDelay")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Integer.toString(Config.getPlantDelay())), false);
         return Config.getPlantDelay();
     }
 
-    public static int getAvoidDense(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("avoidDense")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getAvoidDense(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("avoidDense")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Integer.toString(Config.getAvoidDense())), false);
         return Config.getAvoidDense();
     }
 
-    public static int getPlayerAround(CommandSource source) {
-        source.sendSuccess(new StringTextComponent("playerAround")
-                .append(new TranslationTextComponent("saplanting.commands.saplanting.property.show"))
+    public static int getPlayerAround(CommandSourceStack source) {
+        source.sendSuccess(new TextComponent("playerAround")
+                .append(new TranslatableComponent("saplanting.commands.saplanting.property.show"))
                 .append(Integer.toString(Config.getPlayerAround())), false);
         return Config.getPlayerAround();
     }
 
-    public static int loadProperty(CommandSource source) {
+    public static int loadProperty(CommandSourceStack source) {
         try {
             Config.load();
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.load.success.head")
-                    .append(new TranslationTextComponent("saplanting.commands.saplanting.load.success.suggestCommand")
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.load.success.head")
+                    .append(new TranslatableComponent("saplanting.commands.saplanting.load.success.suggestCommand")
                             .setStyle(Style.EMPTY
-                                    .withUnderlined(true).withColor(Color.parseColor("green"))
+                                    .withUnderlined(true).withColor(TextColor.parseColor("green"))
                                     .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting"))
                                     .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                            new TranslationTextComponent("saplanting.commands.saplanting.load.success.suggestEvent"))))
-                    ).append(new TranslationTextComponent("saplanting.commands.saplanting.load.success.tail")
+                                            new TranslatableComponent("saplanting.commands.saplanting.load.success.suggestEvent"))))
+                    ).append(new TranslatableComponent("saplanting.commands.saplanting.load.success.tail")
                     ), false);
         } catch (Exception e) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.load.fail")
-                    .setStyle(Style.EMPTY.withColor(Color.parseColor("red"))), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.load.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parseColor("red"))), false);
             return 0;
         }
         return 1;
     }
 
-    public static int loadProperty(CommandSource source, String name) {
+    public static int loadProperty(CommandSourceStack source, String name) {
         if (Config.load(name)) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.load.property.success")
-                    .append(new StringTextComponent(name).setStyle(Style.EMPTY
-                            .withUnderlined(true).withColor(Color.parseColor("green"))
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.load.property.success")
+                    .append(new TextComponent(name).setStyle(Style.EMPTY
+                            .withUnderlined(true).withColor(TextColor.parseColor("green"))
                             .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/saplanting " + name))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    new TranslationTextComponent("saplanting.commands.saplanting.load.property.success.suggestEvent"))))
+                                    new TranslatableComponent("saplanting.commands.saplanting.load.property.success.suggestEvent"))))
                     ), false);
             return 1;
         } else {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.load.property.fail")
-                    .setStyle(Style.EMPTY.withColor(Color.parseColor("red"))), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.load.property.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parseColor("red"))), false);
             return 0;
         }
     }
 
-    public static int saveProperty(CommandSource source) {
+    public static int saveProperty(CommandSourceStack source) {
         try {
             Config.save();
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.save.success")
-                    .append(new TranslationTextComponent(Config.stringPath()).setStyle(Style.EMPTY
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.save.success")
+                    .append(new TranslatableComponent(Config.stringPath()).setStyle(Style.EMPTY
                             .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, Config.stringPath()))
                             .withUnderlined(true)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT
-                                    , new TranslationTextComponent("saplanting.commands.saplanting.save.path")))
+                                    , new TranslatableComponent("saplanting.commands.saplanting.save.path")))
                     )), false);
         } catch (Exception e) {
-            source.sendSuccess(new TranslationTextComponent("saplanting.commands.saplanting.save.fail")
-                    .setStyle(Style.EMPTY.withColor(Color.parseColor("red"))), false);
+            source.sendSuccess(new TranslatableComponent("saplanting.commands.saplanting.save.fail")
+                    .setStyle(Style.EMPTY.withColor(TextColor.parseColor("red"))), false);
             return 0;
         }
 
