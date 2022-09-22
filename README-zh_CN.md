@@ -1,5 +1,5 @@
 ---
-title: "落苗生根(Fabric)使用手册"
+title: "落苗生根使用手册"
 author: 暮宇_Twilighter
 date: 2022.8.17
 output: pdf_document
@@ -9,7 +9,6 @@ output: pdf_document
 能够自动种植树苗掉落物的模组；  
 其他模组加入的树苗理论上也能够种植；  
 其他植物方块也可以被自动种植，但需要手动开启此功能。  
-请注意模组适用的游戏版本，需要安装Fabric Loader与Fabric API。
 
 ## 简介  
 如果你还在为砍树后一地的掉落物而发愁，这个模组能够帮到你！  
@@ -19,7 +18,6 @@ output: pdf_document
 ## 如何安装  
 1. 下载正确版本的jar文件；
 2. 将下载好的文件放入模组目录（通常在 ".../.minecraft/mods" 或 ".../.minecraft/versions/\<VersionName\>/mods"）；
-3. 确保你的Fabric Loader和Fabric API安装无误后启动游戏。
 
 ## 设置文件  
 设置文件位于 ".../.minecraft/config/saplanting.json"  

@@ -1,5 +1,5 @@
 ---
-title: "Saplanting(Fabric) Manual"
+title: "Saplanting Manual"
 author: MUYU_Twilighter
 date: 2022.8.17
 ---
@@ -9,7 +9,6 @@ A mod that automatically plants sapling drops in minecraft games.
 Saplings from other mods are supported theoretically.  
 Other plants are also available, if you configure them.  
 Make sure that your Minecraft version is supported by the mod.  
-This is a fabric mod, fabric api is required.
 
 ## Introduction
 
@@ -21,7 +20,6 @@ What's more surprising, other plants can be automatically planted now! But this 
 
 1. Download the Jar File of proper version.
 2. Copy or cut the jar file you've just downloaded to your mod path (usually ".../.minecraft/mods" or ".../.minecraft/versions/\<VersionName\>/mods")
-3. Make sure you have installed fabric api and fabric of proper versions
 
 ## Configurations
 
