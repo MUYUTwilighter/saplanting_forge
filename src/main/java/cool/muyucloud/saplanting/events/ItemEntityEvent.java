@@ -1,11 +1,12 @@
 package cool.muyucloud.saplanting.events;
 
-import cool.muyucloud.saplanting.Config;
+import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.block.*;
 import net.minecraft.block.trees.BigTree;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.item.AirItem;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -14,14 +15,19 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import org.apache.logging.log4j.Logger;
 
 import java.util.LinkedList;
 
 public class ItemEntityEvent {
     public static int expireTime = 6000;
-    private static Thread THREAD = null;
-    private static final LinkedList<ItemEntity> TASKS = new LinkedList<>();
-    private static boolean loop = false;
+
+    private static final LinkedList<ItemEntity> TASKS_1 = new LinkedList<>();
+    private static final LinkedList<ItemEntity> TASKS_2 = new LinkedList<>();
+    private static boolean SWITCH = true;
+    private static boolean THREAD_ALIVE = false;
+    private static final Logger LOGGER = Saplanting.getLogger();
+    private static final Config CONFIG = Saplanting.getConfig();
 
     public static void onItemDrop(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
@@ -29,8 +35,8 @@ public class ItemEntityEvent {
             return;
         }
         ItemEntity itemEntity = ((ItemEntity) entity);
-        Item item = ((ItemEntity) entity).getItem().getItem();
-        if (!isPlant(item)) {
+        Item item = itemEntity.getItem().getItem();
+        if (!Saplanting.isPlantItem(item)) {
             return;
         }
         itemEntity.lifespan = itemEntity.getAge() + 1;
@@ -39,7 +45,7 @@ public class ItemEntityEvent {
     public static void onItemExpire(ItemExpireEvent event) {
         ItemEntity entity = event.getEntityItem();
         Item item = entity.getItem().getItem();
-        if (!isPlant(item)) { // is item placeable?
+        if (!Saplanting.isPlantItem(item)) { // is item placeable?
             return;
         }
 
@@ -49,61 +55,71 @@ public class ItemEntityEvent {
         event.setExtraLife(1);
         event.setCanceled(true);
 
-//        if (!tickPlantCheck(entity)) { // tick-check
-//            entity.tickCount = 0;
-//            return;
-//        }
-//
-//        if (entity.tickCount > Config.getPlantDelay() && roundPlantCheck(entity)) { // round-check
-//            plant(entity);
-//            entity.tickCount = 0;
-//        }
+        /* Kill if multi thread disabled, and deal with item here */
+        if (!CONFIG.getAsBoolean("multiThread")) {
+            THREAD_ALIVE = false;
+            run(entity);
+            return;
+        }
 
-        /* Thread Call */
-        if (!loop) {
-            loop = true;
-            Saplanting.LOGGER.info("Launching Saplanting core thread.");
-            THREAD = new Thread(ItemEntityEvent::run);
+        /* Run Thread if thread not alive */
+        if (!THREAD_ALIVE) {
+            THREAD_ALIVE = true;
+            LOGGER.info("Launching Saplanting core thread.");
+            Thread THREAD = new Thread(ItemEntityEvent::multiThreadRun);
             THREAD.setName("SaplantingCoreThread");
             THREAD.start();
         }
 
-        /* Add to Task Queue */
-        TASKS.add(entity);
+        /* Add item entity as tasks for multi thread run */
+        addToQueue(entity);
     }
 
-    public static void run() {
+    public static void run(ItemEntity entity) {
+        if (!tickPlantCheck(entity)) { // tick-check
+            entity.tickCount = -1;
+            return;
+        }
+
+        if (entity.tickCount > CONFIG.getAsInt("plantDelay") && roundPlantCheck(entity)) { // round-check
+            plant(entity);
+            entity.tickCount = -1;
+        }
+    }
+
+    public static void multiThreadRun() {
         try {
-            while (loop) {
-                if (TASKS.isEmpty()) {
-                    Thread.sleep(50);
-                    continue;
+            while (THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
+                LinkedList<ItemEntity> TASKS;
+                if (SWITCH) {
+                    TASKS = TASKS_2;
+                } else {
+                    TASKS = TASKS_1;
                 }
 
-                while (!TASKS.isEmpty()) {
-                    ItemEntity entity = TASKS.removeFirst();
-                    /* Tick Check */
-                    if (!tickPlantCheck(entity)) {
-                        entity.tickCount = -1;
+                while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
+                    ItemEntity task = TASKS.removeFirst();
+                    Item item = task.getItem().getItem();
+                    if (item instanceof AirItem) { // In case item was removed mill-secs ago
                         continue;
                     }
-
-                    /* Round Check */
-                    if (entity.tickCount > Config.getPlantDelay() && roundPlantCheck(entity)) {
-                        plant(entity);
-                        entity.tickCount = -1;
-                    }
+                    run(task);
                 }
+
+                SWITCH = !SWITCH;
+
+                Thread.sleep(20);
             }
+            LOGGER.info("Saplanting core thread exiting.");
         } catch (Exception e) {
-            Saplanting.LOGGER.info("Saplanting core thread exited!");
+            LOGGER.info("Saplanting core thread exited unexpectedly!");
             e.printStackTrace();
         }
-        loop = false;
+        THREAD_ALIVE = false;
     }
 
     public static void stop() {
-        loop = false;
+        THREAD_ALIVE = false;
     }
 
     /**
@@ -122,22 +138,22 @@ public class ItemEntityEvent {
         World world = entity.level;
 
         /* Player Around Check */
-        if (Config.getPlayerAround() > 0 &&
-                world.hasNearbyAlivePlayer(entity.getX(), entity.getY(), entity.getZ(), Config.getPlayerAround())) {
+        if (CONFIG.getAsInt("playerAround") > 0 &&
+            world.hasNearbyAlivePlayer(entity.getX(), entity.getY(), entity.getZ(), CONFIG.getAsInt("playerAround"))) {
             return false;
         }
 
         if (block instanceof SaplingBlock) {
             /* Avoid Dense Check */
-            if (Config.getAvoidDense() > 0) {
+            if (CONFIG.getAsInt("avoidDense") > 0) {
                 for (BlockPos pos : BlockPos.betweenClosed(
-                        blockPos.offset(-Config.getAvoidDense(), -Config.getAvoidDense(), -Config.getAvoidDense()),
-                        blockPos.offset(Config.getAvoidDense(), Config.getAvoidDense(), Config.getAvoidDense())
+                    blockPos.offset(-CONFIG.getAsInt("avoidDense"), -CONFIG.getAsInt("avoidDense"), -CONFIG.getAsInt("avoidDense")),
+                    blockPos.offset(CONFIG.getAsInt("avoidDense"), CONFIG.getAsInt("avoidDense"), CONFIG.getAsInt("avoidDense"))
                 )) {
                     Block tmpBlock = world.getBlockState(pos).getBlock();
                     if (tmpBlock instanceof LeavesBlock
-                            || tmpBlock instanceof SaplingBlock
-                            || tmpBlock.defaultBlockState().is(BlockTags.LOGS)) {
+                        || tmpBlock instanceof SaplingBlock
+                        || tmpBlock.defaultBlockState().is(BlockTags.LOGS)) {
                         return false;
                     }
                 }
@@ -158,7 +174,7 @@ public class ItemEntityEvent {
      */
     public static boolean tickPlantCheck(ItemEntity entity) {
         BlockItem item = ((BlockItem) entity.getItem().getItem());
-        if (!entity.isOnGround() || !Config.getPlantEnable() || !Config.isItemAllowed(item)) {
+        if (!entity.isOnGround() || !CONFIG.getAsBoolean("plantEnable") || !Saplanting.isPlantAllowed(item)) {
             return false;
         }
 
@@ -175,7 +191,7 @@ public class ItemEntityEvent {
         }
 
         return block.canSurvive(block.defaultBlockState(), world, pos) &&
-                world.getBlockState(pos).getMaterial().isReplaceable();
+            world.getBlockState(pos).getMaterial().isReplaceable();
     }
 
     /**
@@ -197,12 +213,12 @@ public class ItemEntityEvent {
 
         if (block instanceof SaplingBlock) {
             /* Plant Large Tree */
-            if (Config.getPlantLarge() && stack.getCount() >= 4 && ((SaplingBlock) block).treeGrower instanceof BigTree) {
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && ((SaplingBlock) block).treeGrower instanceof BigTree) {
                 for (BlockPos tmpPos : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos)) {
                     if (block.canSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).getMaterial().isReplaceable()
-                            && block.canSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).getMaterial().isReplaceable()
-                            && block.canSurvive(state, world, tmpPos.offset(1, 0, 1)) && world.getBlockState(tmpPos.offset(1, 0, 1)).getMaterial().isReplaceable()
-                            && block.canSurvive(state, world, tmpPos.offset(0, 0, 1)) && world.getBlockState(tmpPos.offset(0, 0, 1)).getMaterial().isReplaceable()) {
+                        && block.canSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).getMaterial().isReplaceable()
+                        && block.canSurvive(state, world, tmpPos.offset(1, 0, 1)) && world.getBlockState(tmpPos.offset(1, 0, 1)).getMaterial().isReplaceable()
+                        && block.canSurvive(state, world, tmpPos.offset(0, 0, 1)) && world.getBlockState(tmpPos.offset(0, 0, 1)).getMaterial().isReplaceable()) {
                         world.setBlock(tmpPos, state, 3);
                         world.setBlock(tmpPos.offset(1, 0, 0), state, 3);
                         world.setBlock(tmpPos.offset(0, 0, 1), state, 3);
@@ -214,7 +230,7 @@ public class ItemEntityEvent {
             }
 //            // This is disabled because AT cannot be applied to net.minecraft.block.trees.Tree#getConfiguredFeature(Random, boolean)
 //            /* Ignore Shape */
-//            if (Config.getIgnoreShape() && ((SaplingBlock) block).treeGrower.getConfiguredFeature(new Random(), true) == null) {
+//            if (CONFIG.getIgnoreShape() && ((SaplingBlock) block).treeGrower.getConfiguredFeature(new Random(), true) == null) {
 //                return;
 //            }
         }
@@ -224,7 +240,27 @@ public class ItemEntityEvent {
         stack.setCount(stack.getCount() - 1);
     }
 
-    public static boolean isPlant(Item item) {
-        return item instanceof BlockItem && ((BlockItem) item).getBlock() instanceof BushBlock;
+    /**
+     * To visit task queue shared by saplanting-core-thread and MC server thread safely,
+     * use this method to add items as tasks.
+     * This should only be used by MC server thread.
+     * */
+    private static void addToQueue(ItemEntity item) {
+        LinkedList<ItemEntity> queue;
+        if (SWITCH) {
+            queue = TASKS_1;
+        } else {
+            queue = TASKS_2;
+        }
+
+        int size = queue.size();
+        if (size > CONFIG.getAsInt("maxTask")) {
+            queue.clear();
+            if (CONFIG.getAsBoolean("warnTaskQueue")) {
+                LOGGER.warn(String.format("Too many items! Cleared %s tasks.", size));
+            }
+        }
+
+        queue.add(item);
     }
 }
