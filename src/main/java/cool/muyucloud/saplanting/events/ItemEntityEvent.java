@@ -4,6 +4,7 @@ import cool.muyucloud.saplanting.util.Config;
 import cool.muyucloud.saplanting.Saplanting;
 import net.minecraft.block.*;
 import net.minecraft.block.trees.BigTree;
+import net.minecraft.block.trees.Tree;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.item.AirItem;
@@ -15,9 +16,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Method;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class ItemEntityEvent {
     public static int expireTime = 6000;
@@ -212,8 +216,9 @@ public class ItemEntityEvent {
         }
 
         if (block instanceof SaplingBlock) {
+            Tree tree = ((SaplingBlock) block).treeGrower;
             /* Plant Large Tree */
-            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && ((SaplingBlock) block).treeGrower instanceof BigTree) {
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && tree instanceof BigTree) {
                 for (BlockPos tmpPos : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos)) {
                     if (block.canSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).getMaterial().isReplaceable()
                         && block.canSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).getMaterial().isReplaceable()
@@ -228,16 +233,29 @@ public class ItemEntityEvent {
                     }
                 }
             }
-//            // This is disabled because AT cannot be applied to net.minecraft.block.trees.Tree#getConfiguredFeature(Random, boolean)
-//            /* Ignore Shape */
-//            if (CONFIG.getIgnoreShape() && ((SaplingBlock) block).treeGrower.getConfiguredFeature(new Random(), true) == null) {
-//                return;
-//            }
+            // At this time, 2x2 planting failed
+            // If want to plant anyway, which means ignoring shape, go to Plant Small
+            // If shape should be concerned, and sapling cannot grow by 1x1, stop planting
+            // Meanwhile, if sapling can, continue planting
+            if (!CONFIG.getAsBoolean("ignoreShape") && !canPlant1x1(tree, world.random)) {
+                return;
+            }
         }
 
         /* Plant Small Objects(including sapling) */
         world.setBlock(pos, state, 3);
         stack.setCount(stack.getCount() - 1);
+    }
+
+    private static boolean canPlant1x1(Tree tree, Random random) {
+        Object result = null;
+        try {
+            Class<? extends Tree> cl = tree.getClass();
+            Method method = ObfuscationReflectionHelper.findMethod(cl, "getConfiguredFeature", Random.class, Boolean.class);
+            result = method.invoke(tree, random, false);
+        } catch (Exception ignored) {
+        }
+        return result != null;
     }
 
     /**
