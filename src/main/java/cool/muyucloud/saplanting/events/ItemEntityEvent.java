@@ -16,7 +16,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.Method;
@@ -251,7 +250,8 @@ public class ItemEntityEvent {
         Object result = null;
         try {
             Class<? extends Tree> cl = tree.getClass();
-            Method method = ObfuscationReflectionHelper.findMethod(cl, "getConfiguredFeature", Random.class, Boolean.class);
+            Method method = cl.getDeclaredMethod("getConfiguredFeature", Random.class, boolean.class);
+            method.setAccessible(true);
             result = method.invoke(tree, random, false);
         } catch (Exception ignored) {
         }
