@@ -16,12 +16,15 @@ import net.minecraft.world.level.block.BushBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.grower.AbstractMegaTreeGrower;
+import net.minecraft.world.level.block.grower.AbstractTreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Method;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class ItemEntityEvent {
     public static int expireTime = 6000;
@@ -215,8 +218,9 @@ public class ItemEntityEvent {
         }
 
         if (block instanceof SaplingBlock) {
+            AbstractTreeGrower tree = ((SaplingBlock) block).treeGrower;
             /* Plant Large Tree */
-            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && ((SaplingBlock) block).treeGrower instanceof AbstractMegaTreeGrower) {
+            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && tree instanceof AbstractMegaTreeGrower) {
                 for (BlockPos tmpPos : BlockPos.betweenClosed(pos.offset(-1, 0, -1), pos)) {
                     if (block.canSurvive(state, world, tmpPos) && world.getBlockState(tmpPos).getMaterial().isReplaceable()
                             && block.canSurvive(state, world, tmpPos.offset(1, 0, 0)) && world.getBlockState(tmpPos.offset(1, 0, 0)).getMaterial().isReplaceable()
@@ -231,16 +235,28 @@ public class ItemEntityEvent {
                     }
                 }
             }
-//            // This is disabled because AT cannot be applied to net.minecraft.block.trees.Tree#getConfiguredFeature(Random, boolean)
-//            /* Ignore Shape */
-//            if (CONFIG.getIgnoreShape() && ((SaplingBlock) block).treeGrower.getConfiguredFeature(new Random(), true) == null) {
-//                return;
-//            }
+            // This is disabled because AT cannot be applied to net.minecraft.block.trees.Tree#getConfiguredFeature(Random, boolean)
+            /* Ignore Shape */
+            if (!CONFIG.getAsBoolean("ignoreShape") && !canPlant1x1(tree, world.random)) {
+                return;
+            }
         }
 
         /* Plant Small Objects(including sapling) */
         world.setBlock(pos, state, 3);
         stack.setCount(stack.getCount() - 1);
+    }
+
+    private static boolean canPlant1x1(AbstractTreeGrower tree, Random random) {
+        Object result = null;
+        try {
+            Class<? extends AbstractTreeGrower> cl = tree.getClass();
+            Method method = cl.getDeclaredMethod("getConfiguredFeature", Random.class, boolean.class);
+            method.setAccessible(true);
+            result = method.invoke(tree, random, false);
+        } catch (Exception ignored) {
+        }
+        return result != null;
     }
 
     /**

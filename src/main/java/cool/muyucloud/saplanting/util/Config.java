@@ -48,7 +48,7 @@ public class Config {
         this.properties.addProperty("allowFlower", false);
         this.properties.addProperty("allowOther", false);
         this.properties.addProperty("showTitleOnOpConnected", false);
-//        this.properties.addProperty("ignoreShape", false);
+        this.properties.addProperty("ignoreShape", false);
         this.properties.addProperty("warnTaskQueue", true);
         this.properties.addProperty("plantDelay", 40);
         this.properties.addProperty("avoidDense", 2);
