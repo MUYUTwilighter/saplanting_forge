@@ -4,7 +4,7 @@ plugins {
 
 
 group = 'cool.muyucloud'
-version = '0.1'
+version = '0.2'
 
 java {
     archivesBaseName = 'saplanting-forge-1.12.2'

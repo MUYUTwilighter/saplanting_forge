@@ -91,13 +91,7 @@ public class EntityItemEvent {
     public static void multiThreadRun() {
         try {
             while (THREAD_ALIVE && CONFIG.getAsBoolean("plantEnable") && CONFIG.getAsBoolean("multiThread")) {
-                LinkedList<EntityItem> TASKS;
-                if (SWITCH) {
-                    TASKS = TASKS_2;
-                } else {
-                    TASKS = TASKS_1;
-                }
-
+                LinkedList<EntityItem> TASKS = SWITCH ? TASKS_2 : TASKS_1;
                 while (!TASKS.isEmpty() && CONFIG.getAsBoolean("plantEnable") && THREAD_ALIVE && CONFIG.getAsBoolean("multiThread")) {
                     EntityItem task = TASKS.removeFirst();
                     Item item = task.getItem().getItem();
@@ -106,9 +100,7 @@ public class EntityItemEvent {
                     }
                     run(task);
                 }
-
                 SWITCH = !SWITCH;
-
                 Thread.sleep(20);
             }
             LOGGER.info("Saplanting core thread exiting.");
@@ -200,16 +192,16 @@ public class EntityItemEvent {
     public static void plant(EntityItem entity) {
         ItemStack stack = entity.getItem();
         World world = entity.world;
-        BlockBush block = ((BlockBush) ((ItemBlock) entity.getItem().getItem()).getBlock());
-        IBlockState state = block.getDefaultState();
+        BlockBush block = (BlockBush) ((ItemBlock) stack.getItem()).getBlock();
+        IBlockState state = block.getStateFromMeta(stack.getMetadata());
         BlockPos pos = entity.getPosition();
         if (entity.posY % 1 != 0) {
             pos = pos.up();
         }
 
-        if (block instanceof BlockSapling) {
-//            // This is disabled because TreeGenerator is not a member of BlockSapling,
-//            // we cannot classify which sapling can only grow in shape of 2x2
+//      This is disabled because TreeGenerator is not a member of BlockSapling,
+//      we cannot classify which sapling can only grow in shape of 2x2
+//        if (block instanceof BlockSapling) {
 //            /* Plant Large Tree */
 //            if (CONFIG.getAsBoolean("plantLarge") && stack.getCount() >= 4 && ((BlockSapling) block). instanceof BigTree) {
 //                for (BlockPos tmpPos : BlockPos.betweenClosed(pos.add(-1, 0, -1), pos)) {
@@ -231,7 +223,7 @@ public class EntityItemEvent {
 //            if (CONFIG.getIgnoreShape() && ((BlockSapling) block).treeGrower.getConfiguredFeature(new Random(), true) == null) {
 //                return;
 //            }
-        }
+//        }
 
         /* Plant Small Objects(including sapling) */
         world.setBlockState(pos, state, 3);

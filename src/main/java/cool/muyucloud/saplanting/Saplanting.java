@@ -23,6 +23,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.beans.Beans;
 import java.util.Objects;
 
 @Mod(
@@ -33,7 +34,7 @@ import java.util.Objects;
 public class Saplanting {
     public static final String MOD_ID = "saplanting";
     public static final String MOD_NAME = "Saplanting";
-    public static final String VERSION = "0.1";
+    public static final String VERSION = "0.2.0";
     private static final Logger LOGGER = LogManager.getLogger();
     private static final EventBus EVENT_BUS = MinecraftForge.EVENT_BUS;
     private static final Config CONFIG = new Config();
