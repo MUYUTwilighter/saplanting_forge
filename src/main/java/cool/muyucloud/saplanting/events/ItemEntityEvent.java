@@ -126,10 +126,10 @@ public class ItemEntityEvent {
     }
 
     /**
-     * This check validation of plant-operation every time when reaching plant-delay,
-     * it goes after tick-check
-     * Including:
-     * 1. are players nearby?
+     * This check validation of plant-operation every time when reaching plant-delay,<br/>
+     * it goes after tick-check<br/>
+     * Including:<br/>
+     * 1. are players nearby?<br/>
      * 2. are there other blocks nearby representing there might be trees?
      */
     public static boolean roundPlantCheck(ItemEntity entity) {
@@ -166,13 +166,13 @@ public class ItemEntityEvent {
     }
 
     /**
-     * This check validation of plant-operation every single game-tick,
-     * it goes before round-check
-     * Including:
-     * 1. item is on ground
-     * 2. saplanting is enabled
-     * 3. is not a water-oriented plant
-     * 4. block BELOW the itemEntity allows the plant to grow
+     * This check validation of plant-operation every single game-tick,<br/>
+     * it goes before round-check<br/>
+     * Including:<br/>
+     * 1. item is on ground<br/>
+     * 2. saplanting is enabled<br/>
+     * 3. is not a water-oriented plant<br/>
+     * 4. block BELOW the itemEntity allows the plant to grow<br/>
      * 5. block AT the itemEntity is replaceable
      */
     public static boolean tickPlantCheck(ItemEntity entity) {
@@ -198,10 +198,10 @@ public class ItemEntityEvent {
     }
 
     /**
-     * Plant operation, but also combines some checks.
-     * Including:
-     * 1. is planting large tree allowed? is it a large tree? So then do planting
-     * 2. is it available to grow a small tree? So then do planting
+     * Plant operation, but also combines some checks.<br/>
+     * Including:<br/>
+     * 1. is planting large tree allowed? is it a large tree? So then do planting<br/>
+     * 2. is it available to grow a small tree? So then do planting<br/>
      * Both of above involve environment check
      */
     public static void plant(ItemEntity entity) {
@@ -250,7 +250,7 @@ public class ItemEntityEvent {
         Object result = null;
         try {
             Class<? extends Tree> cl = tree.getClass();
-            Method method = cl.getDeclaredMethod("getConfiguredFeature", Random.class, boolean.class);
+            Method method = cl.getDeclaredMethod("func_225546_b_", Random.class, boolean.class);
             method.setAccessible(true);
             result = method.invoke(tree, random, false);
         } catch (Exception ignored) {
@@ -259,8 +259,8 @@ public class ItemEntityEvent {
     }
 
     /**
-     * To visit task queue shared by saplanting-core-thread and MC server thread safely,
-     * use this method to add items as tasks.
+     * To visit task queue shared by saplanting-core-thread and MC server thread safely,<br/>
+     * use this method to add items as tasks.<br/>
      * This should only be used by MC server thread.
      * */
     private static void addToQueue(ItemEntity item) {
